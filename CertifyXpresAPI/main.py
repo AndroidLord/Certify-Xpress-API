@@ -17,11 +17,9 @@ async def create_certification(certificate: schema.Certificate,
                             template: str = Query(..., title="Template", description="Select a template", enum=config.template_options)):
         
 
-        #certificate_template = config.CERTIFICATE_TEMPLATE_PATH + 'Certification Template 1.docx'
-        #certificate_template = config.CERTIFICATE_TEMPLATE_PATH + 'Certification Template 2.docx'
+       
         certificate_template = config.CERTIFICATE_TEMPLATE_PATH + f'{template}'
         print(f"Selected template: {certificate_template}")
-        #certificate_template = config.CERTIFICATE_TEMPLATE_PATH + 'Certification Template 1.docx'
         
         doc_output_path = fr'{config.DOC_OUTPUT_PATH}/{certificate.name}.docx'
         pdf_output_path = fr'{config.PDF_OUTPUT_PATH}/{certificate.name}.pdf'
@@ -49,70 +47,6 @@ async def create_certification(certificate: schema.Certificate,
               "message": "Certificate generated successfully!",
               "local path": pdf_output_path,
               "Online url": url}
-
-
-# # route to create multiple certificate through excel
-# @app.post("/c/excel",status_code=status.HTTP_201_CREATED)
-# async def create_certification_from_excel(
-#      files : UploadFile = File(..., title="Excel file", description="Upload an excel file"),
-#      template : str = Query(..., title="Template", description="Select a template", enum=config.template_options)
-#      ):
-#         # get the list of names
-#         excel_file_path = config.EXCEL_ROOT_PATH + f'{files.filename}'
-#         print(f"Excel file path: {excel_file_path}")
-
-#         # Save the uploaded excel file
-#         with open(excel_file_path, "wb") as buffer:
-#             buffer.write(files.file.read())
-
-#         wb = openpyxl.load_workbook(excel_file_path)
-#         sheet = wb.active
-
-#         certificate_template = config.CERTIFICATE_TEMPLATE_PATH + f'{template}'
-#         print(f"Selected template: {certificate_template}")
-
-#         name = "shubhamXYZ"
-#         # Get current time in milliseconds
-#         timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
-
-#         # Update doc_path to a unique name with timestamp
-#         # Update doc_output_path to a unique name with timestamp
-#         doc_output_path = fr'{config.DOC_OUTPUT_PATH}/{name}-{timestamp}.docx'
-
-#         # iterate through the rows in the excel file
-#         for row in sheet.iter_rows(values_only=True):
-#             ename = row[0]
-            
-#             await replace_text_in_docx(
-#                 template_path = certificate_template, 
-#                 certificate= schema.Certificate(name=ename),
-#                 output_path=doc_output_path
-#             )
-
-#             pdf_output_path = config.PDF_OUTPUT_PATH + fr'\{name}\{ename}.pdf'
-            
-#             if not os.path.exists(config.PDF_OUTPUT_PATH + fr'\{name}'):
-#                 os.makedirs(config.PDF_OUTPUT_PATH + fr'\{name}')
-
-#             try:
-#                 await convert_to_pdf(doc_output_path, pdf_output_path)
-                
-#                 s3_client = s3config.S3Config()
-#                 url = s3_client.upload_certificate(
-#                         pdf_output_path,
-#                         client_name=name, 
-#                         certificate_name=ename)
-#                 print(f"Certificate saved & uploaded to {url}")
-                
-#                 print(f"PDF saved to {pdf_output_path}")
-#             except Exception as e:
-#                 print(f"An error occurred during PDF conversion: {e}")
-            
-#             print(f"Certificate generated for {ename}")
-#             print(f"PDF saved to {pdf_output_path}")
-
-            
-#         print("Certificates generated successfully!")
 
 
 # route to create multiple certificate through excel

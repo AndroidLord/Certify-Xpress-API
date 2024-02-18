@@ -47,23 +47,7 @@ async def convert_to_pdf(docx_path, pdf_path):
     doc.Close()
     word.Quit()
 
-# # Single
-# def replace_text_in_docx(template_path, new_text, output_path):
-#     # Load the template document
-#     doc = Document(template_path)
 
-#     # Replace text in all paragraphs
-#     for para in doc.paragraphs:
-#         if 'name' in para.text:
-#             # Find and replace text in runs while preserving formatting
-#             for run in para.runs:
-#                 if 'name' in run.text:
-#                     formatting = get_run_formatting(run)
-#                     run.text = run.text.replace('name', new_text)
-#                     apply_formatting_to_run(run, formatting)
-
-#     # Save the modified document
-#     doc.save(output_path)
 
 # Multiple
 async def replace_text_in_docx(template_path, certificate: schema.Certificate, output_path):
@@ -98,36 +82,6 @@ async def replace_text_in_docx(template_path, certificate: schema.Certificate, o
                     apply_formatting_to_run(run, formatting)
                     print(f"{word} replaced")
 
-
-    # print(doc.paragraphs)
-    # print(doc.paragraphs[0].runs)
-    # print(doc.paragraphs[0].runs[0].text)
-
-    # # Replace text in all paragraphs
-    # for para in doc.paragraphs:
-    #     for run in para.runs:
-    #         print(run.text)
-    #         # if run.text in replacements.keys():
-    #         #     formatting = get_run_formatting(run)
-    #         #     run.text = run.text.replace(run.text, replacements[run.text])
-    #         #     apply_formatting_to_run(run, formatting)
-    #         #     print(f"{run.text} replaced")
-
-    #         for key, value in replacements.items():
-    #             if key in run.text:
-    #                 formatting = get_run_formatting(run)
-    #                 run.text = run.text.replace(key, value)
-    #                 apply_formatting_to_run(run, formatting)
-    #                 print(f"{key} replaced")
-
-    #         # for key, value in replacements.items():
-    #         #     if key in run.text:
-    #         #         formatting = get_run_formatting(run)
-    #         #         run.text = run.text.replace(key, value)
-    #         #         apply_formatting_to_run(run, formatting)
-    #         #         print(f"{key} replaced")
-
-                
 
     # Save the modified document
     doc.save(output_path)
