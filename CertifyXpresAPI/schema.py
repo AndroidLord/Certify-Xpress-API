@@ -25,3 +25,30 @@ class CertificateOut1(CertificateIn1):
 
 class CertificateOut2(CertificateIn2):
     url : str
+
+
+class Certificate(BaseModel):
+    name: str
+    certification_type : str = random.choice(config.certification_types)
+    achivement_type : str = random.choice(config.achivement_types)
+    mentor_name : str = random.choice(config.mentor_names)
+    mentor_type : str = random.choice(config.mentor_types)
+    insititue_name : str = random.choice(config.insititue_names) 
+    course_name : str = random.choice(config.course_names)
+    mail : Optional[EmailStr] = None
+    director_name : Optional[str] = random.choice(config.director_names)
+    director_type : Optional[str] = random.choice(config.director_types)
+
+class CertificateIn(Certificate):
+    upload_to_cloud : bool = False
+    send_mail : bool = False
+
+class CertificateOut(Certificate):
+    url : str
+    download_pdf_path : str
+    mail : Optional[EmailStr] = None
+    send_mail : Optional[bool] = False
+    upload_to_cloud : Optional[bool] = False
+
+    if upload_to_cloud:
+        cloud_url : str 
