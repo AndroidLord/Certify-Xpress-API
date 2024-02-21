@@ -50,23 +50,39 @@ async def convert_to_pdf(docx_path, pdf_path):
 
 
 # Multiple
-async def replace_text_in_docx(template_path, certificate: schema.Certificate, output_path):
+async def replace_text_in_docx(template_path, certificate, output_path):
     # Load the template document
     doc = Document(template_path)
     now = datetime.now()
-    # Define a dictionary of words to replace and their replacements
+
+    # Defined a dictionary of words to replace and their replacements
     replacements = {
+        # Certificate Holder Name
         'person': certificate.name,
+        # certification type
         'header': certificate.certification_type,
+        # achievement
         'achtype': certificate.achivement_type,
+        # mentor
         'mentid': certificate.mentor_name,
         '[mentor]': certificate.mentor_type,
+        # institute
         'institute': certificate.insititue_name,
+        # course
         'course': certificate.course_name,
+        # # director Moved below
+        # 'dirid': certificate.director_name,
+        # '[director]': certificate.director_type,
+        # date
         'date': str(now.day),
         'month': str(now.strftime('%B')),
         'year': str(now.year)
     }
+
+    # type check of certificate if of certificateIn2 type
+    if isinstance(certificate, schema.CertificateIn2):
+        replacements['dirid'] = certificate.director_name
+        replacements['[director]'] = certificate.director_type
 
     print('replacements:', replacements)
 
