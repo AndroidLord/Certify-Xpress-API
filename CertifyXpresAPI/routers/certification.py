@@ -11,10 +11,13 @@ import emailconfig
 
 router = APIRouter(tags=["Certification"])
 
-@router.post("/c/1", status_code=status.HTTP_201_CREATED, response_class=schema.CertificateOut)
-async def create_certification(certificate: schema.CertificateIn1,
-                               template: str = Query(..., title="Template", description="Select a template",
-                                                    enum=config.template_options)):
+# Routes for Certification
+
+@router.post("/c/", status_code=status.HTTP_201_CREATED)
+async def create_certification(certificate: schema.CertificateIn,
+                               template: str = Query(..., title="Template", 
+                                                     description="Select a template",
+                                                     enum=config.template_options)):
 
     certificate_template = config.CERTIFICATE_TEMPLATE_PATH + f'{template}'
     print(f"Selected template: {certificate_template}")
@@ -29,70 +32,44 @@ async def create_certification(certificate: schema.CertificateIn1,
     )
     await convert_to_pdf(doc_output_path, pdf_output_path)
 
-    # Ask user if they want to upload the certificate to S3
-    s3_client = s3config.S3Config()
-    url = s3_client.upload_certificate(
-        pdf_output_path,
-        client_name=certificate.name,
-        certificate_name=certificate.name)
-    print(f"Certificate uploaded to {url}")
-
     print(f"PDF saved to {pdf_output_path}")
-    print("Certificate generated successfully!")
+
+    if certificate.upload_to_cloud:
+        url = await upload_Cert_to_Cloud(certificate.name, pdf_output_path)
+
+    if certificate.send_mail:
+        print(f"Sending mail to {certificate.mail}...")
+        await emailconfig.send_email([certificate.mail],[pdf_output_path])
 
     return {
-            "message": "Certificate generated successfully!",
-            "download path": pdf_output_path,
-            "Online url": url
-        }  
-    
-    
-@router.post("/c/2", status_code=status.HTTP_201_CREATED)
-async def create_certification(certificate: schema.CertificateIn2,
-                               template: str = Query(..., title="Template", description="Select a template",
-                                                    enum=config.template_options)):
-
-    certificate_template = config.CERTIFICATE_TEMPLATE_PATH + f'{template}'
-    print(f"Selected template: {certificate_template}")
-
-    doc_output_path = fr'{config.DOC_OUTPUT_PATH}/{certificate.name}.docx'
-    pdf_output_path = fr'{config.PDF_OUTPUT_PATH}/{certificate.name}.pdf'
-
-    await replace_text_in_docx(
-        template_path=certificate_template,
-        certificate=certificate,
-        output_path=doc_output_path
-    )
-    await convert_to_pdf(doc_output_path, pdf_output_path)
-
-    # Ask user if they want to upload the certificate to S3
-
-    s3_client = s3config.S3Config()
-    url = s3_client.upload_certificate(
-        pdf_output_path,
-        client_name=certificate.name,
-        certificate_name=certificate.name)
-    print(f"Certificate uploaded to {url}")
-
-    print(f"PDF saved to {pdf_output_path}")
-    print("Certificate generated successfully!")
-
-    return {
-        "message": "Certificate generated successfully!",
-        "local path": pdf_output_path,
-        "Online url": url
+        "name": certificate.name,
+        "certification_type": certificate.certification_type,
+        "achivement_type": certificate.achivement_type,
+        "mentor_name": certificate.mentor_name,
+        "mentor_type": certificate.mentor_type,
+        "insititue_name": certificate.insititue_name,
+        "course_name": certificate.course_name,
+        "mail": certificate.mail,
+        "url": url if certificate.upload_to_cloud else None,
+        "download_pdf_path": pdf_output_path,
+        "send_mail": certificate.send_mail,
+        "upload_to_cloud": certificate.upload_to_cloud,
+        "cloud_url": url if certificate.upload_to_cloud else None
     }
-
+        
 
 @router.post("/c/excel/1", status_code=status.HTTP_201_CREATED)
 async def create_certification_from_excel(
+        username: str,
+        upload_to_cloud: bool = False,
+        send_mail: bool = True,
         files: UploadFile = File(..., title="Excel file", description="Upload an excel file"),
         template: str = Query(..., title="Template", description="Select a template", enum=config.template_options)
 ):
     
         # Create a unique name for the uploaded file
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
-        file_name = f"{timestamp}_{files.filename}"
+        file_name = f"{username}_Excel_{files.filename}_{timestamp}.xlsx"
         excel_file_path = os.path.join(config.EXCEL_ROOT_PATH, file_name)
 
     
@@ -106,7 +83,7 @@ async def create_certification_from_excel(
         certificate_template = os.path.join(config.CERTIFICATE_TEMPLATE_PATH, template)
         print(f"Selected template: {certificate_template}")
 
-        name = "shubhamXYZ"
+        name = username
 
         # Update doc_path to a unique name with timestamp
         # Update doc_output_path to a unique name with timestamp
@@ -120,7 +97,10 @@ async def create_certification_from_excel(
             "Institute Name": "insititue_name",
             "Mentor Name": "mentor_name",
             "Mentor Type": "mentor_type",
-            "mail" : "mail"
+            "mail" : "mail",
+            "Director Name": "director_name",
+            "Director Type": "director_type"
+
         }
 
         match_excel_heading_dict = {}
@@ -150,17 +130,15 @@ async def create_certification_from_excel(
             if certificate_data['name'] is None:
                 # print("No name found, skipping...")
                 break
+
             if certificate_data['mail'] is not None:
                 mails.append(certificate_data['mail'])
 
             await replace_text_in_docx(
                 template_path=certificate_template,
-                certificate=schema.CertificateIn1(**certificate_data),
+                certificate=schema.CertificateIn(**certificate_data),
                 output_path=doc_output_path
             )
-
-            
-                
 
             pdf_output_path = os.path.join(config.PDF_OUTPUT_PATH, name, f"{certificate_data['name']}.pdf")
 
@@ -170,13 +148,15 @@ async def create_certification_from_excel(
             try:
                 await convert_to_pdf(doc_output_path, pdf_output_path)
 
-                s3_client = s3config.S3Config()
-                url = s3_client.upload_certificate(
+                if upload_to_cloud:
+                    s3_client = s3config.S3Config()
+                    url = s3_client.upload_certificate(
                     pdf_output_path,
                     client_name=name,
                     certificate_name=certificate_data['name'])
                 
-                certificate_links.append(url if url else None)
+                    certificate_links.append(url if url else None)
+
                 local_certificates_path.append(pdf_output_path if pdf_output_path else None)
 
                 # print(f"Certificate saved & uploaded to {url}")
@@ -191,28 +171,32 @@ async def create_certification_from_excel(
         wb.close()
         print("Certificates generated successfully!")
 
+        # remove template docx file
+        print(f"Removing {doc_output_path}...")
+        os.remove(doc_output_path)
 
-        
-        # Add the certificate links to the Excel file
-        await adding_certificate_link_to_excel(certificate_links, excel_file_path)
+        if upload_to_cloud:
+            # Add the certificate links to the Excel file
+            excel_file_path = await adding_certificate_link_to_excel(certificate_links, excel_file_path)
 
         # Send mail to the users
-        await emailconfig.send_email(mails, local_certificates_path)
+        if send_mail:
+            print(f"Sending mail to {mails}...")
+            await emailconfig.send_email(mails, local_certificates_path)
+
+        # Removing the local certificates
+        for local_cert_path in local_certificates_path:
+            print(f"Removing {local_cert_path}...")
+            os.remove(local_cert_path)
+
+        return {
+            "status": status.HTTP_201_CREATED,
+            "excel_file_path": excel_file_path,
+            "certificate_links": certificate_links
+        }
 
 
-        return FileResponse(excel_file_path, filename=f"{file_name}", media_type='application/*')
-
-# def send_certificate(pdf_file_path: str):
-    
-    # # Check if the file exists
-    # if not os.path.exists(pdf_file_path):
-    #     raise HTTPException(status_code=404, detail="Certificate PDF not found")
-    
-    # # Return the file as response
-    # return FileResponse(pdf_file_path,filename='certificate', media_type='application/pdf')
-
-
-@router.get("/download/")
+@router.get("/download/c")
 async def download_certificate(pdf_file_path: str, certificate_name: str, course_name: str):
     # Check if the file exists
     if not os.path.exists(pdf_file_path):
@@ -222,7 +206,8 @@ async def download_certificate(pdf_file_path: str, certificate_name: str, course
     return FileResponse(pdf_file_path, filename=f"{certificate_name}_{course_name}.pdf", media_type='application/pdf')
 
     
-@router.delete("/delete/")
+
+@router.delete("/delete/c")
 async def delete_certificate(pdf_file_path: str):
     # Check if the file exists
     if not os.path.exists(pdf_file_path):
@@ -232,6 +217,48 @@ async def delete_certificate(pdf_file_path: str):
     os.remove(pdf_file_path)
     
     return {"message": "Certificate deleted successfully!"}
+
+
+# write routes for downloading and deleteing the excel file
+
+@router.get("/download/excel")
+async def download_excel(excel_file_path: str):
+    # Check if the file exists
+    if not os.path.exists(excel_file_path):
+        raise HTTPException(status_code=404, detail="Excel file not found")
+    
+    # Return the file as response
+    return FileResponse(excel_file_path, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+
+@router.delete("/delete/excel")
+async def delete_excel(excel_file_path: str):
+    # Check if the file exists
+    if not os.path.exists(excel_file_path):
+        raise HTTPException(status_code=404, detail="Excel file not found")
+    
+    # Delete the file
+    os.remove(excel_file_path)
+    
+    return {"message": "Excel file deleted successfully!"}
+
+
+# Routes for Certificate Templates
+
+@router.get("/templates")
+async def add_certificate_templates(uploaded_Certificate: UploadFile = File(... , title="Upload Certificate", 
+                                                                            description="Upload a certificate")):
+    
+    # Save the uploaded certificate
+
+    certificate_template_path = os.path.join(config.CERTIFICATE_TEMPLATE_PATH, uploaded_Certificate.filename)
+    with open(certificate_template_path, "wb") as buffer:
+        buffer.write(await uploaded_Certificate.read())
+
+    print(f"Certificate template saved to {certificate_template_path}")
+
+
+# Auxiliary OR Helper Functions 
 
 
 async def adding_certificate_link_to_excel(certificate_links, excel_file_path):
@@ -251,11 +278,33 @@ async def adding_certificate_link_to_excel(certificate_links, excel_file_path):
 
 
     # Save the updated Excel file
-    wb.save('certifyXpress_Shubham_' + datetime.now().strftime("%Y%m%d-%H%M%S") + '.xlsx')
+    prev_excel_file_path = excel_file_path
+    excel_file_path = os.path.join(config.EXCEL_ROOT_PATH, f"CertifyXpress_{datetime.now().strftime('%Y%m%d%H%M%S%f')}.xlsx")
+    wb.save(excel_file_path)
+    
+    # Remove the previous Excel file
+    print(f"Removing {prev_excel_file_path}...")
+    os.remove(prev_excel_file_path)
+
     print(f"Certificate links added to {excel_file_path}")
     wb.close()
+    return excel_file_path
 
 
 
+async def upload_Cert_to_Cloud(certificate_name, pdf_output_path):
+    # Ask user if they want to upload the certificate to S3
+        s3_client = s3config.S3Config()
+        url = s3_client.upload_certificate(
+            pdf_output_path,
+            client_name=certificate_name,
+            certificate_name=certificate_name)
+        print(f"Certificate uploaded to {url}")
+
+        return url
+
+
+
+# END
   
     

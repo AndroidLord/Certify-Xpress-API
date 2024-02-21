@@ -1,10 +1,10 @@
 import os
 
-CERTIFICATE_TEMPLATE_PATH='C:/Users/PC/Documents/Experiments/Certification Template/'
+CERTIFICATE_TEMPLATE_PATH=fr'C:/Users/PC/Documents/Experiments/Certification Template/'
 
-DOC_OUTPUT_PATH = fr'C:\Users\PC\Documents\Experiments\Certificates\\'
-PDF_OUTPUT_PATH = fr'C:\Users\PC\Documents\Experiments\Pdf'
-EXCEL_ROOT_PATH = fr'C:\Users\PC\Documents\Experiments\excel/'
+DOC_OUTPUT_PATH = fr'C:\Users\PC\PycharmProjects\CertifyXpressAPI\CertifyXpresAPI\static\Certificates'
+PDF_OUTPUT_PATH = fr'C:\Users\PC\PycharmProjects\CertifyXpressAPI\CertifyXpresAPI\static\Pdf'
+EXCEL_ROOT_PATH = fr'C:\Users\PC\PycharmProjects\CertifyXpressAPI\CertifyXpresAPI\static\excel'
 
 
 template_options = [f for f in os.listdir(CERTIFICATE_TEMPLATE_PATH) if f.endswith('.docx')]
