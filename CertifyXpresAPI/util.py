@@ -70,6 +70,8 @@ async def replace_text_in_docx(template_path, certificate, output_path):
         'institute': certificate.insititue_name,
         # course
         'course': certificate.course_name,
+        # sign of mentor
+        'Msign': certificate.mentor_name,
         # # director Moved below
         # 'dirid': certificate.director_name,
         # '[director]': certificate.director_type,
@@ -81,8 +83,9 @@ async def replace_text_in_docx(template_path, certificate, output_path):
 
     # type check of certificate if of certificateIn2 type
     if isinstance(certificate, schema.CertificateIn2):
-        replacements['dirid'] = certificate.director_name
-        replacements['[director]'] = certificate.director_type
+        replacements['mentor2'] = certificate.director_name
+        replacements['menpos2'] = certificate.director_type
+        replacements['Osign'] = certificate.director_name
 
     print('replacements:', replacements)
 
