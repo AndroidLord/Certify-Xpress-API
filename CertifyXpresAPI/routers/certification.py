@@ -246,8 +246,18 @@ async def delete_excel(excel_file_path: str):
 # Routes for Certificate Templates
 
 @router.get("/templates")
-async def get_certificate_templates(uploaded_Certificate: UploadFile = File(... , title="Upload Certificate")):
-    pass 
+async def add_certificate_templates(uploaded_Certificate: UploadFile = File(... , title="Upload Certificate", 
+                                                                            description="Upload a certificate")):
+    
+    # Save the uploaded certificate
+
+    certificate_template_path = os.path.join(config.CERTIFICATE_TEMPLATE_PATH, uploaded_Certificate.filename)
+    with open(certificate_template_path, "wb") as buffer:
+        buffer.write(await uploaded_Certificate.read())
+
+    print(f"Certificate template saved to {certificate_template_path}")
+
+
 # Auxiliary OR Helper Functions 
 
 
