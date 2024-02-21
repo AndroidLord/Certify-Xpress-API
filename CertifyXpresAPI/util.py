@@ -72,21 +72,18 @@ async def replace_text_in_docx(template_path, certificate, output_path):
         'course': certificate.course_name,
         # sign of mentor
         'Msign': certificate.mentor_name,
-        # # director Moved below
-        # 'dirid': certificate.director_name,
-        # '[director]': certificate.director_type,
+
+        # director 
+        'mentor2' : certificate.director_name,
+        'menpos2' : certificate.director_type,
+        'Osign' : certificate.director_name,
+        
         # date
         'date': str(now.day),
         'month': str(now.strftime('%B')),
         'year': str(now.year)
     }
-
-    # type check of certificate if of certificateIn2 type
-    if isinstance(certificate, schema.CertificateIn2):
-        replacements['mentor2'] = certificate.director_name
-        replacements['menpos2'] = certificate.director_type
-        replacements['Osign'] = certificate.director_name
-
+        
     print('replacements:', replacements)
 
     # Replace text in all paragraphs

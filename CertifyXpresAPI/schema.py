@@ -35,20 +35,17 @@ class Certificate(BaseModel):
     mentor_type : str = random.choice(config.mentor_types)
     insititue_name : str = random.choice(config.insititue_names) 
     course_name : str = random.choice(config.course_names)
-    mail : Optional[EmailStr] = None
+    mail : Optional[EmailStr] = 'Shubham8318461615@gmail.com'
     director_name : Optional[str] = random.choice(config.director_names)
     director_type : Optional[str] = random.choice(config.director_types)
 
 class CertificateIn(Certificate):
-    upload_to_cloud : bool = False
-    send_mail : bool = False
+    upload_to_cloud : bool = True
+    send_mail : bool = True
 
 class CertificateOut(Certificate):
     url : str
     download_pdf_path : str
-    mail : Optional[EmailStr] = None
     send_mail : Optional[bool] = False
     upload_to_cloud : Optional[bool] = False
-
-    if upload_to_cloud:
-        cloud_url : str 
+    cloud_url : Optional[str] = None
