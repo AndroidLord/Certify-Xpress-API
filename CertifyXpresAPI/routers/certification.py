@@ -11,7 +11,7 @@ import emailconfig
 
 router = APIRouter(tags=["Certification"])
 
-@router.post("/c/1", status_code=status.HTTP_201_CREATED)
+@router.post("/c/1", status_code=status.HTTP_201_CREATED, response_class=schema.CertificateOut)
 async def create_certification(certificate: schema.CertificateIn1,
                                template: str = Query(..., title="Template", description="Select a template",
                                                     enum=config.template_options)):
