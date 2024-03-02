@@ -3,6 +3,7 @@ from docx.shared import Pt
 import os
 import schema
 from datetime import datetime
+import subprocess
 
 def get_run_formatting(run):
     """
@@ -32,22 +33,20 @@ def apply_formatting_to_run(run, formatting):
 
 
 async def convert_to_pdf(docx_path, pdf_path):
-    # Open Word application
-    # word = win32com.client.Dispatch("Word.Application")
-    # word.Visible = False  # Don't show the Word application window
+    try:
+        pdf_path = os.path.dirname(pdf_path)
+        cmd = ['libreoffice', '--convert-to', 'pdf', '--outdir', pdf_path, docx_path]
+        p = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        p.wait(timeout=10)
+        stdout, stderr = p.communicate()
+    
+        if stderr:
+            raise subprocess.SubprocessError(stderr)
 
-    # # Open the document
-    # doc = word.Documents.Open(docx_path)
-
-    # # Save as PDF
-    # doc.SaveAs(pdf_path, FileFormat=17)  # FileFormat=17 for PDF
-
-    # # Close the document and Word application
-    # doc.Close()
-    # word.Quit()
-
-    print('docx_path:', docx_path)
-
+    except Exception as e:
+        print(f"Error converting DOC file: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 # Multiple

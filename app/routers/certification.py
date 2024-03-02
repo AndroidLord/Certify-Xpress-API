@@ -8,6 +8,7 @@ import s3config
 import schema
 from util import replace_text_in_docx, convert_to_pdf
 import emailconfig
+import time
 
 router = APIRouter(tags=["Certification"])
 
@@ -33,6 +34,16 @@ async def create_certification(certificate: schema.CertificateIn,
     await convert_to_pdf(doc_output_path, pdf_output_path)
 
     print(f"PDF saved to {pdf_output_path}")
+
+    max_attempts = 10
+    curr_attempt = 0
+    while not os.path.exists(pdf_output_path):
+        curr_attempt +=1
+        if curr_attempt > max_attempts:
+            print("PDF file could not be created within the specified time.")
+            return
+        print("Waiting for PDF file to be created...")
+        time.sleep(1) 
 
     if certificate.upload_to_cloud:
         url = await upload_Cert_to_Cloud(certificate.name, pdf_output_path)
@@ -147,6 +158,15 @@ async def create_certification_from_excel(
 
             try:
                 await convert_to_pdf(doc_output_path, pdf_output_path)
+                
+                max_attempts = 10                                                                                             
+                curr_attempt = 0
+
+                while not os.path.exists(pdf_output_path):                                                  
+                    curr_attempt +=1                                                                                                
+                    if curr_attempt > max_attempts:                       
+                        print("PDF file could not be created within the specified time.")                                           
+                    print("Waiting for PDF file to be created...")                                                                time.sleep(1)
 
                 if upload_to_cloud:
                     s3_client = s3config.S3Config()
